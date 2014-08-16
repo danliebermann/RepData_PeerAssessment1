@@ -3,7 +3,8 @@ Reproducible Research Assignment One
 
 The analysis begins by setting the working directory and adding the necessary packages to
 my library.
-```{r}
+
+```r
 ##Set the working directory
 setwd("/Users/danliebermann/Documents/Coursera/Reproducible Research")
 
@@ -14,7 +15,8 @@ library(plyr)
 ```
 
 This assignment uses data from a personal activity monitoring device.  The data measures steps taken while wearing the device in five miute intervals.  We load the data and prep it for analysis by converting the date column into a date.
-```{r}
+
+```r
 ##Read in activity monitoring data
 activityRaw<-read.csv("activity.csv")
 ##Covert a date column formatted as a date and add to dataframe
@@ -28,15 +30,32 @@ The following code answers two questions regarding the total steps taken per day
 1. Make a histogram of the total number of steps taken each day
 2. Calculate and report the mean and median total number of steps taken per day
 
-```{r}
+
+```r
 ##Create a dataframe summarizing steps per day and name columns
 dailySteps<-ddply(activityRaw, .(date), summarize, sum(steps))
 names(dailySteps)<-c("date", "steps")
 ##Plot a histogram
 with(dailySteps, plot(date, steps, type = "h", main = "Total Steps Per Day", xlab = "Date", ylab = "Total Steps"))
+```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
+
+```r
 ##Calculate the mean and median total steps taken per day
 median(na.omit(dailySteps$steps))
+```
+
+```
+## [1] 10765
+```
+
+```r
 mean(na.omit(dailySteps$steps))
+```
+
+```
+## [1] 10766
 ```
 
 The next section of code answers the below questions to explore daily activity patterns.
@@ -44,7 +63,8 @@ The next section of code answers the below questions to explore daily activity p
 1.Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 2.Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
-```{r}
+
+```r
 ##Calculate the average steps taken per five minute interal
 averageSteps<-mean(activityRaw$steps)
 ##Add a column indicating sequence of intervals
@@ -53,11 +73,21 @@ names(activityRaw)<-c("steps", "interval", "date", "row.number")
 #Plot the number of steps taken per interval
 with(activityRaw, plot(row.number, steps, type = "l", main = "Steps Per Interval", xlab = "Interval", ylab = "Steps"))
 abline(h=averageSteps, col = "red")
+```
+
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4.png) 
+
+```r
 ##Determine which interval in the data set has the most steps
 averageInterval<-ddply(na.omit(activityRaw), .(interval), summarize, mean(steps))
 names(averageInterval)<-c("interval","steps")
 ##Return the five minute interval with most average steps across days
 subset(averageInterval, steps==max(averageInterval$steps))
+```
+
+```
+##     interval steps
+## 104      835 206.2
 ```
 
 The next section of code imputes missing values by taking the average number of steps for a given interval and using it to replace an NA value.  It answer the following questions.
@@ -67,9 +97,17 @@ The next section of code imputes missing values by taking the average number of 
 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
-```{r}
+
+```r
 ##Determine how many rows have NAs by subtracting dataframe length from complete cases count
 length(activityRaw[,1]) - sum(complete.cases(activityRaw))
+```
+
+```
+## [1] 2304
+```
+
+```r
 ##Replace NA step values with the average number of steps for that interval
 ##Create a dataframe for the average steps per interval
 imputeTable<-ddply(na.omit(activityRaw), .(interval), summarize, mean(steps))
@@ -88,17 +126,48 @@ dailySteps2<-ddply(activitywAverage, .(date), summarize, sum(steps))
 names(dailySteps2)<-c("date", "steps")
 ##Plot a histogram
 with(dailySteps2, plot(date, steps, type = "h", main = "Total Steps Per Day (w/ Imputed Dat", xlab = "Date", ylab = "Total Steps"))
+```
+
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
+
+```r
 ##Calculate the mean and median total steps taken per day
 median(dailySteps2$steps)
+```
+
+```
+## [1] 10766
+```
+
+```r
 mean(dailySteps2$steps)
+```
+
+```
+## [1] 10766
+```
+
+```r
 ##Determine the difference between the non-imputed and imputed data by median and mean
 median(dailySteps2$steps)-median(na.omit(dailySteps$steps))
+```
+
+```
+## [1] 1.189
+```
+
+```r
 mean(dailySteps2$steps)-mean(na.omit(dailySteps$steps))
+```
+
+```
+## [1] 0
 ```
 
 The final piece of analysis generates two graphs to explore how activity differs on weekends compared to weekdays.  As the graphs show, there is more actvity in the afternoon on weekends compared to weekdays.
 
-```{r}
+
+```r
 ##Determine if there are differences between weekends and weekdays
 ##Add a new column to the matrix with the weekday
 activitywAverage[,6]<-weekdays(activitywAverage$date)
@@ -107,6 +176,13 @@ activitywAverage[,6]<-weekdays(activitywAverage$date)
 activitywAverage[,7]<-factor(activitywAverage[,6], levels = c("Sunday", "Monday",
   "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"), labels = c("Weekend"
   , "Weekday", "Weekday", "Weekday", "Weekday", "Weekday", "Weekend"))
+```
+
+```
+## Warning: duplicated levels in factors are deprecated
+```
+
+```r
 ##Next the new vector is converted to characters and re-converted to a vector of just two factors
 activitywAverage[,7]<-as.character(activitywAverage[,7])
 activitywAverage[,7]<-factor(activitywAverage[,7], levels = c("Weekend", "Weekday"),
@@ -122,3 +198,5 @@ qplot(interval, averagesteps, data = plotWeekdays, geom = "line",
       facets = weekdayorweekend~., main = "Average Steps Per Interval by Weekday 
       Type", ylab = "Average Steps", xlab = "Interval")
 ```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
